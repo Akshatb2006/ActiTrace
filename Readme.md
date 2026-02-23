@@ -1,291 +1,173 @@
 # 🚀 ActiTrace – Human Activity Recognition Platform
 
-ActiTrace is an end-to-end Machine Learning system that performs Human Activity Recognition (HAR) using wearable sensor data (accelerometer & gyroscope).  
-
-The system allows users to:
-
-- Upload wearable sensor sessions
-- Automatically segment and extract features
-- Run XGBoost-based activity classification
-- Visualize activity timelines
-- View session summaries and analytics
-- Retrain and manage model versions
+ActiTrace is an end-to-end Machine Learning ecosystem designed to perform Human Activity Recognition (HAR) using wearable sensor data (accelerometer & gyroscope). The platform bridges the gap between raw signal processing and a functional full-stack application, simulating a production-grade on-device activity classifier.
 
 ---
 
-# 📌 Project Overview
+## 📌 Project Overview
 
-ActiTrace bridges Machine Learning and full-stack application development.
+ActiTrace is built with a modern stack to handle high-frequency sensor data and deliver real-time insights:
 
-It is built with:
-
-- **Frontend:** React + Tailwind + Recharts
-- **Backend:** FastAPI (Python)
-- **ML Layer:** XGBoost + scikit-learn
-- **Database:** PostgreSQL
-- **Deployment:** Docker + AWS EC2
-
-The system is designed to simulate an on-device activity classifier with an application layer.
+| Layer | Technology |
+|---|---|
+| **Frontend** | React + Tailwind CSS + Recharts |
+| **Backend** | FastAPI (Python) |
+| **ML Layer** | XGBoost + scikit-learn |
+| **Database** | PostgreSQL |
+| **Deployment** | Docker + AWS EC2 |
 
 ---
 
-# 🧠 Problem Statement
+## 🧠 Problem Statement
 
-Modern wearable devices generate rich sensor data, but users and researchers lack:
+Modern wearable devices generate rich sensor data, but users and researchers often lack:
 
-- Transparent ML pipelines
-- Explainable activity timelines
-- Model version tracking
-- Reproducible inference
-- Session comparison capabilities
+- Transparent ML pipelines.
+- Explainable activity timelines.
+- Model version tracking and reproducibility.
+- Capabilities to compare sessions across different model versions.
 
-ActiTrace solves this by providing a complete ML lifecycle with visualization and version control.
-
----
-
-# 🏗 System Architecture
-
-
-Frontend (React)
-↓
-FastAPI Backend
-↓
-ML Processing Layer
-
-Segmentation
-
-Feature Extraction
-
-XGBoost Inference
-↓
-PostgreSQL Database
-↓
-Report Visualization
-
+ActiTrace solves this by providing a complete ML lifecycle — from raw data upload to visualization and version control.
 
 ---
 
-# 📊 Core Features
+## 🏗 System Architecture
 
-## ✅ Session Upload
-- Upload accelerometer / gyroscope data
-- CSV validation
-- Model version selection
-- Re-run inference option
+The architecture follows a modular flow:
 
-## ✅ Automatic Segmentation
-- Sliding window (2.56s default)
-- 50% overlap
-- Window-level processing
-
-## ✅ Feature Extraction
-- Mean
-- Standard deviation
-- Energy
-- Entropy
-- Correlation
-- Frequency-domain features
-
-## ✅ Activity Classification
-- XGBoost multiclass classifier
-- Window-level predictions
-- Confidence scoring
-
-## ✅ Report Page
-- Activity timeline visualization
-- Total time per activity
-- Activity distribution chart
-- Prediction table
-- Optional ground truth comparison
-
-## ✅ Model Management
-- Train new model
-- Store model versions
-- Activate/deactivate models
-- Track accuracy & macro-F1
+- **Frontend (React):** User interaction and data visualization.
+- **FastAPI Backend:** Orchestrates requests and manages the database.
+- **ML Processing Layer:**
+  - *Segmentation:* Slicing raw signals into windows.
+  - *Feature Extraction:* Transforming raw data into statistical features.
+  - *XGBoost Inference:* Classifying the activity.
+- **PostgreSQL:** Persistent storage for users, sessions, and predictions.
 
 ---
 
-# 🗄 Database Design
+## 📊 Core Features
 
-Main tables:
+### ✅ Session Upload & Processing
+- Upload raw accelerometer/gyroscope CSV files.
+- CSV validation and model version selection.
+- Automatic Segmentation: Sliding window (`2.56s` default) with `50%` overlap.
 
-- Users
-- Sessions
-- Windows
-- Predictions
-- ModelVersions
-- ActivityLogs
+### ✅ Advanced Feature Extraction
+The ML layer extracts key indicators from each window:
+- **Time-domain:** Mean, Standard Deviation, Energy, Entropy, and Correlation.
+- **Frequency-domain:** FFT-based features for motion intensity analysis.
 
-Supports:
-- Window-level granularity
-- Model version traceability
-- Explainability extension
+### ✅ Activity Classification
+- **Model:** XGBoost multiclass classifier.
+- **Output:** Window-level predictions with associated confidence scoring.
+
+### ✅ Interactive Reporting
+- Activity timeline visualization.
+- Total time distribution per activity.
+- Comprehensive prediction tables with optional ground truth comparison.
+
+### ✅ Model Management
+- Train new models on-demand.
+- Activate/deactivate specific model versions.
+- Track performance metrics like Accuracy & Macro-F1.
 
 ---
 
-# 🔌 API Endpoints
+## 🗄 Database Design
+
+The schema is designed for high granularity and traceability:
+
+| Table | Description |
+|---|---|
+| **Users** | Account management and authentication. |
+| **Sessions** | Metadata for a single recording/upload. |
+| **Windows** | Segmented data points (2.56s intervals). |
+| **Predictions** | Classification results per window. |
+| **ModelVersions** | Metadata and paths for saved `.json` or `.pkl` models. |
+| **ActivityLogs** | Audit trail for system actions. |
+
+---
+
+## 🔌 API Endpoints
 
 ### Authentication
 - `POST /auth/login`
 - `POST /auth/signup`
 
-### Sessions
-- `POST /sessions/upload`
-- `GET /sessions/{id}`
-- `GET /sessions`
-
-### Predictions
-- `GET /sessions/{id}/predictions`
-- `GET /sessions/{id}/summary`
+### Sessions & Predictions
+- `POST /sessions/upload` — Process new data.
+- `GET /sessions/{id}` — Get session metadata.
+- `GET /sessions/{id}/predictions` — Get detailed window-level results.
+- `GET /sessions/{id}/summary` — Get aggregated activity stats.
 
 ### Model Management
-- `POST /model/train`
-- `GET /model/versions`
-- `PATCH /model/{id}/activate`
+- `POST /model/train` — Trigger a training job.
+- `GET /model/versions` — List all stored models.
+- `PATCH /model/{id}/activate` — Set the primary model for inference.
 
 ---
 
-# 📈 ML Evaluation
+## 📈 ML Evaluation
 
-Primary metrics:
+The system is evaluated against the **UCI HAR Dataset** using:
 
-- Accuracy
-- Macro F1-score
-- Confusion Matrix
-
-Success Criteria:
-- Macro F1 comparable to published HAR benchmarks
-- Stable inference across sessions
-- Clear activity separation in timeline view
-- Retraining without breaking historical sessions
+- **Accuracy:** Overall correctness.
+- **Macro F1-score:** To ensure performance across imbalanced activity classes.
+- **Confusion Matrix:** To visualize classification errors between similar motions.
 
 ---
 
-# 🚀 Deployment
+## 🚀 Deployment
 
-## Local Setup
+### Local Setup
+
+Ensure you have Docker and Docker Compose installed:
 
 ```bash
-git clone <repo>
+git clone <your-repo-link>
 cd actitrace
 docker-compose up --build
 ```
 
-Access:
+- **Frontend:** http://localhost:3000
+- **Backend API Docs:** http://localhost:8000/docs
 
-Frontend → http://localhost:3000
+### Production Setup (AWS EC2)
+- Containerized deployment via Docker.
+- Nginx reverse proxy for traffic management.
+- SSL encryption enabled via Certbot.
 
-Backend → http://localhost:8000/docs
+---
 
-Production Deployment
+## 📂 Project Structure
 
-AWS EC2 (Single VM)
-
-Docker containers
-
-Nginx reverse proxy
-
-Environment variable configuration
-
-SSL enabled
-
-📂 Project Structure
+```
 actitrace/
-│
-├── frontend/
-├── backend/
-│   ├── routers/
-│   ├── services/
-│   ├── db/
-│   ├── models/
-│
-├── ml/
+├── frontend/          # React + Tailwind source
+├── backend/           # FastAPI application
+│   ├── routers/       # API route definitions
+│   ├── services/      # Business logic
+│   ├── db/            # SQLAlchemy models & migrations
+├── ml/                # Machine Learning scripts
 │   ├── segmentation.py
 │   ├── feature_extraction.py
 │   ├── train.py
-│   ├── inference.py
-│
+│   └── inference.py
 ├── docker-compose.yml
-├── README.md
+└── README.md
+```
 
-📊 Dataset
+---
 
-Human Activity Recognition Using Smartphones Dataset
-UCI Machine Learning Repository
+## 🧪 Future Improvements
 
-Activities:
+- **Explainability:** Integration of SHAP/LIME for feature-level explanations.
+- **Performance:** Redis caching layer for rapid report generation.
+- **Scale:** Asynchronous inference queue (Celery/RabbitMQ) for large files.
+- **Streaming:** Real-time mode via WebSockets.
 
-WALKING
+---
 
-WALKING_UPSTAIRS
+## 📄 License
 
-WALKING_DOWNSTAIRS
-
-SITTING
-
-STANDING
-
-LAYING
-
-🎯 Target Users
-
-ML engineers
-
-Fitness analytics researchers
-
-Wearable device developers
-
-Students learning end-to-end ML systems
-
-🔐 Non-Functional Requirements
-
-JWT-based authentication
-
-Stable inference
-
-Model version isolation
-
-Clean UI feedback states
-
-Database consistency
-
-Error logging
-
-🧪 Future Improvements
-
-Redis caching layer
-
-Async inference queue
-
-Real-time streaming mode
-
-SHAP explainability visualization
-
-Leave-one-subject-out evaluation
-
-Kubernetes deployment
-
-📌 Conclusion
-
-ActiTrace is not just a classifier.
-It is a full ML system with:
-
-Upload → Process → Predict → Store → Visualize → Retrain → Compare
-
-It demonstrates:
-
-End-to-end ML engineering
-
-Backend integration
-
-Database design
-
-Model lifecycle management
-
-Production deployment readiness
-
-📄 License
-
-This project is for educational and research purposes.
-Dataset license belongs to the original UCI HAR authors.
+This project is for educational and research purposes. Dataset license belongs to the original UCI HAR authors.
