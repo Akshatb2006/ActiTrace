@@ -170,6 +170,7 @@ Success Criteria:
 git clone <repo>
 cd actitrace
 docker-compose up --build
+```
 
 Access:
 
@@ -207,6 +208,7 @@ actitrace/
 │
 ├── docker-compose.yml
 ├── README.md
+
 📊 Dataset
 
 Human Activity Recognition Using Smartphones Dataset
