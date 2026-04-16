@@ -164,18 +164,56 @@ Success Criteria:
 
 # 🚀 Deployment
 
-## Local Setup
+## Local Setup (Docker)
 
 ```bash
 git clone <repo>
 cd actitrace
-docker-compose up --build
+docker compose up --build
+```
 
 Access:
+- Frontend → http://localhost:3000
+- Backend  → http://localhost:8000/docs
 
-Frontend → http://localhost:3000
+The first registered account becomes an admin (can train and activate models).
 
-Backend → http://localhost:8000/docs
+## Local Setup (without Docker)
+
+Backend:
+```bash
+python -m venv venv && source venv/bin/activate
+pip install -r backend/requirements.txt
+
+# 1. Train and persist the initial model artifact
+python ml/train.py --version v1.0
+
+# 2. Run the API (defaults to SQLite at ./actitrace.db)
+cd backend && JWT_SECRET=dev-secret uvicorn app.main:app --reload --port 8000
+```
+
+Frontend:
+```bash
+cd frontend
+npm install
+npm run dev   # http://localhost:3000  (proxies /api → http://localhost:8000)
+```
+
+## Quick smoke test
+
+```bash
+# create admin account
+curl -X POST http://localhost:8000/auth/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@local.dev","password":"pass1234"}'
+
+# upload the first 50 windows of the UCI test set as a session
+TOKEN=$(curl -s -X POST http://localhost:8000/auth/login -H 'Content-Type: application/json' \
+  -d '{"email":"admin@local.dev","password":"pass1234"}' | jq -r .token)
+head -50 "UCI HAR Dataset/test/X_test.txt" > /tmp/sample.txt
+curl -X POST http://localhost:8000/sessions/upload \
+  -H "Authorization: Bearer $TOKEN" -F "file=@/tmp/sample.txt"
+```
 
 Production Deployment
 

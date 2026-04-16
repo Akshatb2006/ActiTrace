@@ -1,0 +1,14 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+python-jose[cryptography]==3.3.0
+bcrypt==5.0.0
+xgboost==3.2.0
+scikit-learn==1.8.0
+pandas==3.0.0
+numpy==2.4.2
+joblib==1.5.3
