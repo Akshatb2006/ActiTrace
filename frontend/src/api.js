@@ -1,4 +1,8 @@
-const BASE = "/api";
+// In local docker, calls go through nginx at /api. In a static-frontend
+// deploy (Render, Vercel) set VITE_API_BASE to the backend URL at build time.
+let BASE = import.meta.env.VITE_API_BASE;
+if (BASE && !/^https?:\/\//.test(BASE)) BASE = "https://" + BASE;
+if (!BASE) BASE = "/api";
 
 function authHeaders(token, extra = {}) {
   const h = { ...extra };

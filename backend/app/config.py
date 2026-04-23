@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +9,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "sqlite:///./actitrace.db"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalize_db_url(cls, v):
+        # Render/Heroku emit postgres://…; SQLAlchemy wants postgresql+psycopg2://…
+        if isinstance(v, str) and v.startswith("postgres://"):
+            return "postgresql+psycopg2://" + v[len("postgres://"):]
+        return v
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24
