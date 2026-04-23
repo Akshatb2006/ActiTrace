@@ -47,11 +47,35 @@ def activate(
     db: DBSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> ModelVersionOut:
+    """Mark a version active. Multiple versions may be active simultaneously —
+    each remains selectable on upload. The default for uploads that don't
+    specify a version is the active one with the highest accuracy."""
     target = db.query(ModelVersion).filter(ModelVersion.id == model_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="Model version not found")
-    db.query(ModelVersion).update({ModelVersion.is_active: False})
     target.is_active = True
+    db.commit()
+    db.refresh(target)
+    invalidate_cache()
+    return ModelVersionOut.model_validate(target)
+
+
+@router.patch("/{model_id}/deactivate", response_model=ModelVersionOut)
+def deactivate(
+    model_id: str,
+    db: DBSession = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> ModelVersionOut:
+    target = db.query(ModelVersion).filter(ModelVersion.id == model_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Model version not found")
+    active_count = db.query(ModelVersion).filter(ModelVersion.is_active.is_(True)).count()
+    if target.is_active and active_count <= 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot deactivate the last active model — activate another version first.",
+        )
+    target.is_active = False
     db.commit()
     db.refresh(target)
     invalidate_cache()

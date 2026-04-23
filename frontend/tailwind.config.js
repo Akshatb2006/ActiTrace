@@ -4,14 +4,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          900: "#1e3a8a",
+        ink: {
+          DEFAULT: "#0a0a0a",
+          soft: "#171717",
+          muted: "#404040",
+          faint: "#737373",
         },
+        paper: {
+          DEFAULT: "#fafafa",
+          card: "#ffffff",
+          sub: "#f4f4f4",
+        },
+        line: {
+          DEFAULT: "#e5e5e5",
+          strong: "#d4d4d4",
+        },
+        accent: {
+          DEFAULT: "#ff3b30",
+          soft: "#ffe5e3",
+        },
+      },
+      fontFamily: {
+        sans: [
+          "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI",
+          "Roboto", "Inter", "sans-serif",
+        ],
+        mono: [
+          "ui-monospace", "SFMono-Regular", "Menlo", "Monaco",
+          "JetBrains Mono", "Consolas", "monospace",
+        ],
+      },
+      letterSpacing: {
+        wider: "0.08em",
+        widest: "0.16em",
+      },
+      borderRadius: {
+        none: "0px",
+        sm: "2px",
+        DEFAULT: "4px",
+        md: "6px",
+        lg: "10px",
       },
     },
   },

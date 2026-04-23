@@ -15,11 +15,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 from ml.train import load_dataset, select_features  # noqa: E402
 
-import xgboost as xgb  # noqa: E402
 import joblib  # noqa: E402
-import pandas as pd  # noqa: E402
+from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import accuracy_score, f1_score  # noqa: E402
-from sklearn.model_selection import train_test_split  # noqa: E402
+from sklearn.pipeline import Pipeline  # noqa: E402
+from sklearn.preprocessing import StandardScaler  # noqa: E402
 
 ACTIVITY_LABELS = [
     "WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS",
@@ -40,30 +40,15 @@ def train_new_version(db: DBSession, version_name: str | None = None) -> ModelVe
     X_train, y_train, X_test, y_test, feature_names = load_dataset(dataset_path)
     selector, drop_columns, X_train_pruned, X_test_pruned = select_features(X_train, X_test)
 
-    quick = xgb.XGBClassifier(
-        n_estimators=100, max_depth=5, learning_rate=0.1,
-        objective="multi:softprob", num_class=6, random_state=42, n_jobs=-1,
-    )
-    quick.fit(X_train_pruned, y_train)
-    top_features = (
-        pd.Series(quick.feature_importances_, index=X_train_pruned.columns)
-        .sort_values(ascending=False).head(100).index.tolist()
-    )
-
+    top_features = list(X_train_pruned.columns)
     X_tr_sel = X_train_pruned[top_features]
     X_te_sel = X_test_pruned[top_features]
 
-    X_tr, X_val, y_tr, y_val = train_test_split(
-        X_tr_sel, y_train, test_size=0.2, stratify=y_train, random_state=42
-    )
-
-    model = xgb.XGBClassifier(
-        n_estimators=300, max_depth=6, learning_rate=0.05,
-        subsample=0.8, colsample_bytree=0.8,
-        objective="multi:softprob", num_class=6, eval_metric="mlogloss",
-        early_stopping_rounds=20, random_state=42, n_jobs=-1,
-    )
-    model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
+    model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf", LogisticRegression(C=1.0, max_iter=5000)),
+    ])
+    model.fit(X_tr_sel, y_train)
 
     y_pred = model.predict(X_te_sel)
     accuracy = float(accuracy_score(y_test, y_pred))

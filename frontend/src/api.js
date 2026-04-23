@@ -41,10 +41,14 @@ export const api = {
   getSession: (token, id) =>
     fetch(`${BASE}/sessions/${id}`, { headers: authHeaders(token) }).then(handle),
 
-  uploadSession: (token, file, modelVersionId) => {
+  getInsights: (token, id) =>
+    fetch(`${BASE}/sessions/${id}/insights`, { headers: authHeaders(token) }).then(handle),
+
+  uploadSession: (token, file, modelVersionId, labelsFile) => {
     const fd = new FormData();
     fd.append("file", file);
     if (modelVersionId) fd.append("model_version_id", modelVersionId);
+    if (labelsFile) fd.append("labels", labelsFile);
     return fetch(`${BASE}/sessions/upload`, {
       method: "POST",
       headers: authHeaders(token),
@@ -64,6 +68,12 @@ export const api = {
 
   activateModel: (token, id) =>
     fetch(`${BASE}/model/${id}/activate`, {
+      method: "PATCH",
+      headers: authHeaders(token),
+    }).then(handle),
+
+  deactivateModel: (token, id) =>
+    fetch(`${BASE}/model/${id}/deactivate`, {
       method: "PATCH",
       headers: authHeaders(token),
     }).then(handle),

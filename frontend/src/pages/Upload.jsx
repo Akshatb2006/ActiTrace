@@ -7,6 +7,7 @@ export default function Upload() {
   const { token } = useAuth();
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
+  const [labels, setLabels] = useState(null);
   const [models, setModels] = useState([]);
   const [modelId, setModelId] = useState("");
   const [error, setError] = useState(null);
@@ -22,7 +23,7 @@ export default function Upload() {
     setBusy(true);
     setError(null);
     try {
-      const data = await api.uploadSession(token, file, modelId);
+      const data = await api.uploadSession(token, file, modelId, labels);
       navigate(`/sessions/${data.session_id}`, { replace: true });
     } catch (err) {
       setError(err.message);
@@ -32,29 +33,50 @@ export default function Upload() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Upload sensor session</h1>
-        <p className="text-sm text-slate-500">
-          CSV with one row per 2.56 s window of pre-extracted features. An optional{" "}
-          <code className="rounded bg-slate-100 px-1">activity</code> column is captured as
-          ground truth for comparison.
+    <div className="mx-auto max-w-2xl space-y-8">
+      <div className="border-b border-line pb-5">
+        <div className="eyebrow">02 / Upload</div>
+        <h1 className="mt-1 font-mono text-3xl uppercase tracking-wider text-ink">
+          New Session
+        </h1>
+        <p className="mt-2 font-mono text-[11px] uppercase leading-relaxed tracking-wider text-ink-faint">
+          CSV: one row per 2.56 s window of pre-extracted features. Optional
+          <span className="kbd mx-1">activity</span> column kept as ground truth.
         </p>
       </div>
 
-      <form className="card space-y-5" onSubmit={submit}>
+      <form className="card space-y-6" onSubmit={submit}>
         <div>
-          <label className="label">Session file (CSV)</label>
+          <label className="label">Session file · CSV</label>
           <input
-            className="input mt-1"
+            className="input mt-2"
             type="file"
             accept=".csv,.txt"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             required
           />
           {file && (
-            <p className="mt-2 text-xs text-slate-500">
-              Selected: {file.name} · {(file.size / 1024).toFixed(1)} KB
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+              · {file.name} · {(file.size / 1024).toFixed(1)} kb
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="label">Ground truth · labels file (optional)</label>
+          <input
+            className="input mt-2"
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => setLabels(e.target.files?.[0] || null)}
+          />
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+            · one label per row · e.g. UCI <span className="kbd">y_test.txt</span> ·
+            aligned with session rows
+          </p>
+          {labels && (
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+              · {labels.name} · {(labels.size / 1024).toFixed(1)} kb
             </p>
           )}
         </div>
@@ -62,7 +84,7 @@ export default function Upload() {
         <div>
           <label className="label">Model version</label>
           <select
-            className="input mt-1"
+            className="input mt-2"
             value={modelId}
             onChange={(e) => setModelId(e.target.value)}
           >
@@ -77,10 +99,12 @@ export default function Upload() {
         </div>
 
         {error && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+          <div className="border border-accent bg-accent-soft p-3 font-mono text-[11px] uppercase tracking-wider text-accent">
+            {error}
+          </div>
         )}
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 border-t border-line pt-5">
           <button type="button" className="btn-ghost" onClick={() => navigate(-1)}>
             Cancel
           </button>

@@ -5,12 +5,24 @@ import { useAuth } from "../auth.jsx";
 
 const statusBadge = (status) => {
   const map = {
-    completed: "bg-emerald-50 text-emerald-700",
-    processing: "bg-amber-50 text-amber-700",
-    failed: "bg-red-50 text-red-700",
-    pending: "bg-slate-100 text-slate-600",
+    completed: "border-ink text-ink",
+    processing: "border-ink-faint text-ink-faint",
+    failed: "border-accent text-accent",
+    pending: "border-line text-ink-muted",
   };
-  return `inline-flex rounded-full px-2 py-0.5 text-xs ${map[status] || map.pending}`;
+  return `inline-flex items-center gap-1.5 border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest ${
+    map[status] || map.pending
+  }`;
+};
+
+const statusDot = (status) => {
+  const map = {
+    completed: "bg-ink",
+    processing: "bg-ink-faint animate-pulse",
+    failed: "bg-accent",
+    pending: "bg-line-strong",
+  };
+  return `dot ${map[status] || map.pending}`;
 };
 
 export default function Dashboard() {
@@ -28,53 +40,72 @@ export default function Dashboard() {
   }, [token]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-end justify-between border-b border-line pb-5">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Sessions</h1>
-          <p className="text-sm text-slate-500">
-            All sensor sessions you've uploaded for activity recognition.
+          <div className="eyebrow">01 / Sessions</div>
+          <h1 className="mt-1 font-mono text-3xl uppercase tracking-wider text-ink">
+            Activity Log
+          </h1>
+          <p className="mt-2 max-w-lg font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+            All sensor sessions uploaded for activity recognition.
           </p>
         </div>
         <Link to="/upload" className="btn-primary">
-          Upload session
+          + Upload
         </Link>
       </div>
 
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="border border-accent bg-accent-soft p-3 font-mono text-[11px] uppercase tracking-wider text-accent">
+          {error}
+        </div>
       )}
 
-      <div className="card overflow-hidden p-0">
+      <div className="card p-0">
         {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+          <div className="p-10 text-center font-mono text-[11px] uppercase tracking-widest text-ink-faint">
+            Loading…
+          </div>
         ) : sessions.length === 0 ? (
-          <div className="p-10 text-center text-sm text-slate-500">
-            No sessions yet — upload your first sensor file to get started.
+          <div className="bg-dots p-16 text-center">
+            <div className="eyebrow">Empty</div>
+            <p className="mt-2 font-mono text-sm uppercase tracking-wider text-ink">
+              No sessions yet
+            </p>
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+              Upload a sensor file to begin.
+            </p>
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
-              <tr>
+          <table className="min-w-full">
+            <thead className="border-b border-line">
+              <tr className="text-left font-mono text-[10px] uppercase tracking-widest text-ink-faint">
                 <th className="px-6 py-3">File</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3">Uploaded</th>
                 <th className="px-6 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white text-sm">
+            <tbody className="divide-y divide-line">
               {sessions.map((s) => (
-                <tr key={s.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-900">{s.filename}</td>
-                  <td className="px-6 py-3">
-                    <span className={statusBadge(s.status)}>{s.status}</span>
+                <tr key={s.id} className="transition hover:bg-paper-sub">
+                  <td className="px-6 py-4 font-mono text-sm text-ink">{s.filename}</td>
+                  <td className="px-6 py-4">
+                    <span className={statusBadge(s.status)}>
+                      <span className={statusDot(s.status)} />
+                      {s.status}
+                    </span>
                   </td>
-                  <td className="px-6 py-3 text-slate-500">
+                  <td className="px-6 py-4 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
                     {new Date(s.uploaded_at).toLocaleString()}
                   </td>
-                  <td className="px-6 py-3 text-right">
-                    <Link to={`/sessions/${s.id}`} className="text-brand-600 hover:underline">
-                      View report →
+                  <td className="px-6 py-4 text-right">
+                    <Link
+                      to={`/sessions/${s.id}`}
+                      className="font-mono text-[11px] uppercase tracking-widest text-ink underline decoration-dotted underline-offset-4 hover:text-accent"
+                    >
+                      View →
                     </Link>
                   </td>
                 </tr>

@@ -2,8 +2,10 @@ import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 
 const navItem = ({ isActive }) =>
-  `px-3 py-2 rounded-md text-sm font-medium ${
-    isActive ? "bg-brand-100 text-brand-900" : "text-slate-600 hover:bg-slate-100"
+  `px-3 py-1.5 font-mono text-[11px] uppercase tracking-widest transition ${
+    isActive
+      ? "text-ink border-b border-ink"
+      : "text-ink-faint hover:text-ink border-b border-transparent"
   }`;
 
 export default function Layout() {
@@ -17,13 +19,16 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-lg font-semibold text-brand-700">ActiTrace</span>
-            <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700">
-              HAR Platform
+      <header className="border-b border-line bg-paper-card/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link to="/" className="flex items-center gap-3">
+            <span className="flex h-7 w-7 items-center justify-center border border-ink">
+              <span className="h-2 w-2 rounded-full bg-ink" />
             </span>
+            <span className="font-mono text-sm uppercase tracking-widest text-ink">
+              Actitrace
+            </span>
+            <span className="eyebrow hidden md:inline">/ HAR</span>
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={navItem}>
@@ -37,11 +42,10 @@ export default function Layout() {
             </NavLink>
           </nav>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500">
-              {user?.email}{" "}
-              <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-                {user?.role}
-              </span>
+            <span className="hidden items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-ink-faint md:flex">
+              <span className="dot bg-accent" />
+              {user?.email}
+              <span className="kbd">{user?.role}</span>
             </span>
             <button onClick={handleLogout} className="btn-ghost">
               Sign out
@@ -49,11 +53,17 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
         <Outlet />
       </main>
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-400">
-        ActiTrace · UCI HAR Dataset · XGBoost
+      <footer className="border-t border-line py-5 text-center">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+          <span>Actitrace · UCI HAR · XGBoost</span>
+          <span className="flex items-center gap-2">
+            <span className="dot bg-ink" />
+            system online
+          </span>
+        </div>
       </footer>
     </div>
   );

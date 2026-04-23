@@ -21,9 +21,10 @@ def process_session(
     session: Session,
     file_bytes: bytes,
     model_version: ModelVersion,
+    labels_bytes: bytes | None = None,
 ) -> None:
     artifact = load_artifact(Path(model_version.artifact_path))
-    result = run_inference(file_bytes, artifact)
+    result = run_inference(file_bytes, artifact, labels_bytes=labels_bytes)
 
     for win_pred in result.predictions:
         window = Window(

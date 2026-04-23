@@ -193,6 +193,7 @@ cd backend && JWT_SECRET=dev-secret uvicorn app.main:app --reload --port 8000
 ```
 
 Frontend:
+
 ```bash
 cd frontend
 npm install

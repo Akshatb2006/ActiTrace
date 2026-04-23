@@ -2,24 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  body {
+    background-image: radial-gradient(#e5e5e5 1px, transparent 1px);
+    background-size: 18px 18px;
+    background-position: -9px -9px;
+  }
+  ::selection {
+    background: #0a0a0a;
+    color: #fafafa;
+  }
+}
+
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition;
+    @apply inline-flex items-center justify-center rounded-none border px-5 py-2.5
+           font-mono text-[11px] uppercase tracking-widest transition
+           disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50;
+    @apply btn border-ink bg-ink text-paper hover:bg-ink-soft;
   }
   .btn-ghost {
-    @apply btn bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50;
+    @apply btn border-line bg-transparent text-ink hover:bg-paper-sub;
+  }
+  .btn-danger {
+    @apply btn border-accent text-accent hover:bg-accent-soft;
   }
   .input {
-    @apply block w-full rounded-md border-slate-300 px-3 py-2 text-sm shadow-sm
-           focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+    @apply block w-full rounded-none border border-line bg-paper-card px-3 py-2.5 text-sm
+           text-ink placeholder:text-ink-faint
+           focus:border-ink focus:outline-none focus:ring-0;
   }
   .card {
-    @apply rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200;
+    @apply rounded-none border border-line bg-paper-card p-6;
   }
   .label {
-    @apply block text-sm font-medium text-slate-700;
+    @apply block font-mono text-[10px] uppercase tracking-widest text-ink-muted;
+  }
+  .kbd {
+    @apply inline-block rounded-none border border-line bg-paper-sub px-1.5 py-0.5
+           font-mono text-[10px] uppercase tracking-wider text-ink-muted;
+  }
+  .eyebrow {
+    @apply font-mono text-[10px] uppercase tracking-widest text-ink-faint;
+  }
+  .dot {
+    @apply inline-block h-1.5 w-1.5 rounded-full;
+  }
+}
+
+@layer utilities {
+  .bg-dots {
+    background-image: radial-gradient(#d4d4d4 1px, transparent 1px);
+    background-size: 14px 14px;
   }
 }

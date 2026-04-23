@@ -7,8 +7,7 @@ services:
       POSTGRES_DB: actitrace
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # Not exposed on the host — the backend reaches it over the compose network.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U actitrace"]
       interval: 5s
@@ -16,26 +15,30 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg2://actitrace:actitrace@postgres:5432/actitrace
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      CORS_ORIGINS: http://localhost:3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
     volumes:
       - ./backend/app/models/store:/app/app/models/store
       - ./UCI HAR Dataset:/app/UCI HAR Dataset:ro
     ports:
-      - "8000:8000"
+      - "8100:8000"
 
   frontend:
     build: ./frontend
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "3100:80"
 
 volumes:
   pgdata:

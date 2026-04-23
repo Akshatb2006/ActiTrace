@@ -27,17 +27,27 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen items-center justify-center px-4">
       <div className="card w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-slate-900">Create your account</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          The first account becomes the admin (can train and activate models).
+        <div className="mb-6 flex items-center gap-3 border-b border-line pb-5">
+          <span className="flex h-8 w-8 items-center justify-center border border-ink">
+            <span className="h-2 w-2 rounded-full bg-accent" />
+          </span>
+          <div>
+            <div className="eyebrow">Create account</div>
+            <div className="font-mono text-base uppercase tracking-widest text-ink">
+              Actitrace
+            </div>
+          </div>
+        </div>
+        <p className="mb-5 font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+          First account becomes admin — trains & activates models.
         </p>
-        <form className="mt-6 space-y-4" onSubmit={submit}>
+        <form className="space-y-4" onSubmit={submit}>
           <div>
             <label className="label">Email</label>
             <input
-              className="input mt-1"
+              className="input mt-2"
               type="email"
               required
               value={email}
@@ -47,7 +57,7 @@ export default function Signup() {
           <div>
             <label className="label">Password</label>
             <input
-              className="input mt-1"
+              className="input mt-2"
               type="password"
               required
               minLength={8}
@@ -56,15 +66,17 @@ export default function Signup() {
             />
           </div>
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+            <div className="border border-accent bg-accent-soft p-3 font-mono text-[11px] uppercase tracking-wider text-accent">
+              {error}
+            </div>
           )}
           <button className="btn-primary w-full" type="submit" disabled={loading}>
-            {loading ? "Creating account…" : "Create account"}
+            {loading ? "Creating…" : "Create account"}
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-slate-500">
-          Already have an account?{" "}
-          <Link to="/login" className="text-brand-600 hover:underline">
+        <p className="mt-5 text-center font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+          Already registered?{" "}
+          <Link to="/login" className="text-ink underline decoration-dotted underline-offset-4">
             Sign in
           </Link>
         </p>

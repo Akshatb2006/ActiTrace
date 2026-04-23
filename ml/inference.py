@@ -73,13 +73,34 @@ class ModelArtifact:
 
 def _read_csv(file_bytes: bytes) -> pd.DataFrame:
     text = file_bytes.decode("utf-8", errors="replace")
-    sample = text[:2048]
+    lines = text.splitlines()
+    if not lines:
+        return pd.DataFrame()
+    first = lines[0].strip()
 
-    sep = "," if sample.count(",") >= sample.count("\t") else "\t"
-    if sep == "," and sample.count(",") < 5:
+    if "," in first:
+        sep = ","
+    elif "\t" in first:
+        sep = "\t"
+    else:
         sep = r"\s+"
 
-    has_header = any(c.isalpha() for c in sample.splitlines()[0]) if sample else False
+    # Header detection: try to parse every token on the first line as a float.
+    # If all tokens are numeric (incl. scientific notation like 2.57e-001), the
+    # row is data, not a header.
+    import re
+    tokens = re.split(r"[,\t]|\s+", first) if sep == r"\s+" else first.split(sep)
+    tokens = [t for t in tokens if t]
+
+    def _is_num(s: str) -> bool:
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
+    has_header = bool(tokens) and not all(_is_num(t) for t in tokens)
+
     return pd.read_csv(
         io.StringIO(text),
         sep=sep,
@@ -131,9 +152,30 @@ def _normalize_label(value, activity_labels: List[str]) -> Optional[str]:
     return s if s in activity_labels else s
 
 
-def run_inference(file_bytes: bytes, artifact: ModelArtifact) -> InferenceResult:
+def _read_labels(file_bytes: bytes) -> Optional[pd.Series]:
+    if not file_bytes:
+        return None
+    try:
+        df = _read_csv(file_bytes)
+    except Exception:
+        return None
+    if df.empty:
+        return None
+    # Prefer an explicit activity/label column, else take the first column.
+    explicit = [c for c in df.columns if str(c).lower() in {"activity", "label", "y"}]
+    col = explicit[0] if explicit else df.columns[0]
+    return df[col]
+
+
+def run_inference(
+    file_bytes: bytes,
+    artifact: ModelArtifact,
+    labels_bytes: Optional[bytes] = None,
+) -> InferenceResult:
     raw = _read_csv(file_bytes)
     features_df, label_series = _separate_label(raw)
+    if label_series is None:
+        label_series = _read_labels(labels_bytes) if labels_bytes else None
     df_561 = _coerce_to_561(features_df, artifact.feature_names)
 
     label_idx, proba = artifact.predict(df_561)
@@ -145,11 +187,9 @@ def run_inference(file_bytes: bytes, artifact: ModelArtifact) -> InferenceResult
         label = artifact.activity_labels[int(idx)]
         start = i * WINDOW_STEP_SECONDS
         end = start + WINDOW_SIZE_SECONDS
-        gt = (
-            _normalize_label(label_series.iloc[i], artifact.activity_labels)
-            if label_series is not None
-            else None
-        )
+        gt = None
+        if label_series is not None and i < len(label_series):
+            gt = _normalize_label(label_series.iloc[i], artifact.activity_labels)
         predictions.append(
             WindowPrediction(
                 window_index=i,

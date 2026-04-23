@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session as DBSession
 from app.db.database import get_db
 from app.db.models import ModelVersion, Prediction, Session, User, Window
 from app.db.schemas import SessionDetail, SessionOut, TimelineEntry, UploadResponse
+from app.services.insights import generate_insights
 from app.services.model_registry import get_active_version
 from app.services.session_processor import process_session
 from app.utils.security import get_current_user
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 @router.post("/upload", response_model=UploadResponse)
 async def upload_session(
     file: UploadFile = File(...),
+    labels: Optional[UploadFile] = File(None),
     model_version_id: Optional[str] = Form(None),
     db: DBSession = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -31,6 +33,8 @@ async def upload_session(
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
+    labels_bytes = await labels.read() if labels is not None else None
+
     session = Session(
         user_id=user.id,
         model_version_id=version.id,
@@ -42,7 +46,7 @@ async def upload_session(
     db.refresh(session)
 
     try:
-        process_session(db, session, file_bytes, version)
+        process_session(db, session, file_bytes, version, labels_bytes=labels_bytes)
     except Exception as exc:
         session.status = "failed"
         session.summary_json = {"error": str(exc)}
@@ -122,3 +126,37 @@ def get_summary(
         "summary": session.summary_json or {},
         "status": session.status,
     }
+
+
+@router.get("/{session_id}/insights")
+def get_insights(
+    session_id: str,
+    db: DBSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> dict:
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == user.id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    summary = session.summary_json or {}
+    if not summary:
+        raise HTTPException(status_code=400, detail="Session has no summary yet")
+
+    rows = (
+        db.query(Window, Prediction)
+        .join(Prediction, Prediction.window_id == Window.id)
+        .filter(Window.session_id == session.id)
+        .order_by(Window.window_index.asc())
+        .all()
+    )
+    timeline = [
+        {"activity": p.predicted_label, "confidence": p.confidence}
+        for _, p in rows
+    ]
+
+    try:
+        text = generate_insights(summary, timeline)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return {"session_id": session.id, "insights": text}

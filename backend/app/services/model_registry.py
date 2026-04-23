@@ -37,36 +37,54 @@ def invalidate_cache(path: Optional[Path] = None) -> None:
 
 
 def get_active_version(db: DBSession) -> ModelVersion:
-    version = db.query(ModelVersion).filter(ModelVersion.is_active.is_(True)).first()
-    if version is None:
+    """Return the best-accuracy active version. Multiple versions may be active
+    — this picks the one to use when an upload doesn't specify a model_version_id."""
+    active = (
+        db.query(ModelVersion)
+        .filter(ModelVersion.is_active.is_(True))
+        .order_by(ModelVersion.accuracy.desc())
+        .all()
+    )
+    if not active:
         raise RuntimeError("No active model version is configured")
-    return version
+    return active[0]
 
 
 def sync_filesystem_to_db(db: DBSession) -> int:
-    """Discover any artifacts on disk that aren't yet registered as ModelVersion rows."""
+    """Discover any artifacts on disk that aren't yet registered as ModelVersion rows.
+
+    When the DB is empty, mark every discovered artifact as active so operators
+    can pick any version on upload from day one. The best-accuracy one is the
+    default for uploads that don't specify a model_version_id — see
+    `get_active_version`.
+    """
     settings = get_settings()
     store_dir = settings.model_store_dir
     store_dir.mkdir(parents=True, exist_ok=True)
 
-    added = 0
+    db_was_empty = db.query(ModelVersion).count() == 0
+
+    new_rows: list[ModelVersion] = []
     for artifact_path in sorted(store_dir.glob("*.joblib")):
         version_name = artifact_path.stem
         existing = db.query(ModelVersion).filter(ModelVersion.version_name == version_name).first()
         if existing:
             continue
         artifact = ModelArtifact(artifact_path)
-        is_first = db.query(ModelVersion).count() == 0
-        db.add(
+        new_rows.append(
             ModelVersion(
                 version_name=version_name,
                 accuracy=artifact.metrics["accuracy"],
                 macro_f1=artifact.metrics["macro_f1"],
-                is_active=is_first,
+                is_active=db_was_empty,
                 artifact_path=str(artifact_path),
             )
         )
-        added += 1
-    if added:
-        db.commit()
-    return added
+
+    if not new_rows:
+        return 0
+
+    for row in new_rows:
+        db.add(row)
+    db.commit()
+    return len(new_rows)

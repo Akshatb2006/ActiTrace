@@ -23,10 +23,11 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 ACTIVITY_LABELS = [
     "WALKING",
@@ -54,16 +55,13 @@ def load_dataset(dataset_path: Path):
 
 
 def select_features(X_train, X_test):
+    """Drop zero-variance columns only. Correlation pruning hurts linear models
+    (they benefit from the full 561-dim hand-crafted UCI HAR feature space)."""
     selector = VarianceThreshold(threshold=0.0)
     X_train_var = pd.DataFrame(selector.fit_transform(X_train))
     X_test_var = pd.DataFrame(selector.transform(X_test))
-
-    corr = X_train_var.corr().abs()
-    upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
-    drop_columns = [c for c in upper.columns if any(upper[c] > 0.9)]
-    X_train_pruned = X_train_var.drop(columns=drop_columns)
-    X_test_pruned = X_test_var.drop(columns=drop_columns)
-    return selector, drop_columns, X_train_pruned, X_test_pruned
+    drop_columns: list = []
+    return selector, drop_columns, X_train_var, X_test_var
 
 
 def main():
@@ -82,38 +80,19 @@ def main():
     print(f"[train] loading dataset from {dataset_path}")
     X_train, y_train, X_test, y_test, feature_names = load_dataset(dataset_path)
 
-    print("[train] selecting features")
+    print("[train] selecting features (zero-variance filter only)")
     selector, drop_columns, X_train_pruned, X_test_pruned = select_features(X_train, X_test)
 
-    print("[train] picking top-100 features by quick model gain")
-    quick = xgb.XGBClassifier(
-        n_estimators=100, max_depth=5, learning_rate=0.1,
-        objective="multi:softprob", num_class=6, random_state=42, n_jobs=-1,
-    )
-    quick.fit(X_train_pruned, y_train)
-    top_features = (
-        pd.Series(quick.feature_importances_, index=X_train_pruned.columns)
-        .sort_values(ascending=False)
-        .head(100)
-        .index
-        .tolist()
-    )
-
+    top_features = list(X_train_pruned.columns)
     X_tr_sel = X_train_pruned[top_features]
     X_te_sel = X_test_pruned[top_features]
 
-    X_tr, X_val, y_tr, y_val = train_test_split(
-        X_tr_sel, y_train, test_size=0.2, stratify=y_train, random_state=42
-    )
-
-    print("[train] fitting tuned model")
-    model = xgb.XGBClassifier(
-        n_estimators=300, max_depth=6, learning_rate=0.05,
-        subsample=0.8, colsample_bytree=0.8,
-        objective="multi:softprob", num_class=6, eval_metric="mlogloss",
-        early_stopping_rounds=20, random_state=42, n_jobs=-1,
-    )
-    model.fit(X_tr, y_tr, eval_set=[(X_val, y_val)], verbose=False)
+    print(f"[train] fitting logistic regression on {len(top_features)} features")
+    model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("clf", LogisticRegression(C=1.0, max_iter=5000)),
+    ])
+    model.fit(X_tr_sel, y_train)
 
     y_pred = model.predict(X_te_sel)
     accuracy = float(accuracy_score(y_test, y_pred))

@@ -40,71 +40,100 @@ export default function ModelAdmin() {
     }
   };
 
+  const handleDeactivate = async (id) => {
+    setError(null);
+    try {
+      await api.deactivateModel(token, id);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-end justify-between border-b border-line pb-5">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Model versions</h1>
-          <p className="text-sm text-slate-500">
-            Train new XGBoost models on the UCI HAR dataset and switch which one serves
-            inference.
+          <div className="eyebrow">03 / Registry</div>
+          <h1 className="mt-1 font-mono text-3xl uppercase tracking-wider text-ink">
+            Model Versions
+          </h1>
+          <p className="mt-2 max-w-xl font-mono text-[11px] uppercase tracking-wider text-ink-faint">
+            Train XGBoost models on UCI HAR · switch active inference version.
           </p>
         </div>
         <button className="btn-primary" disabled={!isAdmin || training} onClick={handleTrain}>
-          {training ? "Training…" : "Train new version"}
+          {training ? "Training…" : "+ Train new"}
         </button>
       </div>
 
       {!isAdmin && (
-        <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
-          You are signed in as a regular user. Only admins can train or activate models.
+        <div className="border border-line bg-paper-sub p-3 font-mono text-[11px] uppercase tracking-wider text-ink-muted">
+          Signed in as user · only admins can train/activate.
         </div>
       )}
 
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="border border-accent bg-accent-soft p-3 font-mono text-[11px] uppercase tracking-wider text-accent">
+          {error}
+        </div>
       )}
 
-      <div className="card overflow-hidden p-0">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
+      <div className="card p-0">
+        <table className="min-w-full">
+          <thead className="border-b border-line">
+            <tr className="text-left font-mono text-[10px] uppercase tracking-widest text-ink-faint">
               <th className="px-6 py-3">Version</th>
               <th className="px-6 py-3">Accuracy</th>
-              <th className="px-6 py-3">Macro F1</th>
+              <th className="px-6 py-3">F1</th>
               <th className="px-6 py-3">Trained</th>
               <th className="px-6 py-3">Status</th>
               <th className="px-6 py-3 text-right"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-line">
             {models.map((m) => (
-              <tr key={m.id}>
-                <td className="px-6 py-3 font-medium text-slate-900">{m.version_name}</td>
-                <td className="px-6 py-3 text-slate-700">{(m.accuracy * 100).toFixed(2)}%</td>
-                <td className="px-6 py-3 text-slate-700">{m.macro_f1.toFixed(3)}</td>
-                <td className="px-6 py-3 text-slate-500">
+              <tr key={m.id} className="hover:bg-paper-sub">
+                <td className="px-6 py-4 font-mono text-sm text-ink">{m.version_name}</td>
+                <td className="px-6 py-4 font-mono text-[11px] text-ink-muted">
+                  {(m.accuracy * 100).toFixed(2)}%
+                </td>
+                <td className="px-6 py-4 font-mono text-[11px] text-ink-muted">
+                  {m.macro_f1.toFixed(3)}
+                </td>
+                <td className="px-6 py-4 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
                   {new Date(m.train_date).toLocaleString()}
                 </td>
-                <td className="px-6 py-3">
+                <td className="px-6 py-4">
                   {m.is_active ? (
-                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 border border-ink px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-ink">
+                      <span className="dot bg-ink" />
                       Active
                     </span>
                   ) : (
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    <span className="inline-flex items-center gap-1.5 border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+                      <span className="dot bg-line-strong" />
                       Inactive
                     </span>
                   )}
                 </td>
-                <td className="px-6 py-3 text-right">
-                  {!m.is_active && isAdmin && (
-                    <button
-                      className="text-brand-600 hover:underline"
-                      onClick={() => handleActivate(m.id)}
-                    >
-                      Activate
-                    </button>
+                <td className="px-6 py-4 text-right">
+                  {isAdmin && (
+                    m.is_active ? (
+                      <button
+                        className="font-mono text-[11px] uppercase tracking-widest text-ink-faint underline decoration-dotted underline-offset-4 hover:text-accent"
+                        onClick={() => handleDeactivate(m.id)}
+                      >
+                        Deactivate →
+                      </button>
+                    ) : (
+                      <button
+                        className="font-mono text-[11px] uppercase tracking-widest text-ink underline decoration-dotted underline-offset-4 hover:text-accent"
+                        onClick={() => handleActivate(m.id)}
+                      >
+                        Activate →
+                      </button>
+                    )
                   )}
                 </td>
               </tr>
